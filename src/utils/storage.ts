@@ -18,7 +18,7 @@ export function loadStoredState(): AppState {
       shifts: parsed.shifts || [],
       assignments: parsed.assignments || [],
       taskTypes: parsed.taskTypes || [],
-      selectedClassId: parsed.selectedClassId || null,
+      selectedClassId: parsed.selectedClassId || 'all',
       selectedDate: parsed.selectedDate || null,
       firebaseConfig: parsed.firebaseConfig
     };

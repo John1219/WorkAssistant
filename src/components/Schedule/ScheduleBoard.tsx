@@ -41,13 +41,21 @@ export const ScheduleBoard: React.FC = () => {
   } | null>(null);
   const [scheduleNotice, setScheduleNotice] = useState<string | null>(null);
 
-  // Shifts for the selected training class
+  const isAllClasses = !state.selectedClassId || state.selectedClassId === 'all';
+
+  // Shifts for the selected training class (or all classes)
   const classShifts = useMemo(() => {
-    if (!selectedClass) return [];
+    if (isAllClasses) {
+      return [...state.shifts].sort((a, b) => (a.date + a.startTime).localeCompare(b.date + b.startTime));
+    }
     return state.shifts
-      .filter(s => s.classId === selectedClass.id)
+      .filter(s => s.classId === state.selectedClassId)
       .sort((a, b) => (a.date + a.startTime).localeCompare(b.date + b.startTime));
-  }, [state.shifts, selectedClass]);
+  }, [state.shifts, state.selectedClassId, isAllClasses]);
+
+  const classMap = useMemo(() => {
+    return new Map(state.classes.map(c => [c.id, c]));
+  }, [state.classes]);
 
   // Distinct dates in this class's shifts
   const distinctDates = useMemo(() => {
@@ -136,12 +144,12 @@ export const ScheduleBoard: React.FC = () => {
     }
   };
 
-  if (!selectedClass) {
+  if (state.classes.length === 0) {
     return (
       <div className="bg-white p-12 rounded-2xl border border-slate-200 text-center">
         <CalendarDays className="h-12 w-12 text-slate-300 mx-auto" />
-        <h3 className="mt-3 text-base font-semibold text-slate-800">No training class selected</h3>
-        <p className="text-xs text-slate-500 mt-1">Please create or select a training class.</p>
+        <h3 className="mt-3 text-base font-semibold text-slate-800">No training classes created yet</h3>
+        <p className="text-xs text-slate-500 mt-1">Please create a training class to get started.</p>
         <button
           onClick={() => setActiveTab('classes')}
           className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold"
@@ -161,13 +169,14 @@ export const ScheduleBoard: React.FC = () => {
           <div>
             <div className="flex items-center gap-2">
               <span className="px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 font-semibold text-2xs uppercase">
-                Active Training Event
+                {isAllClasses ? 'All Classes View' : 'Active Training Event'}
               </span>
               <select
-                value={selectedClass.id}
+                value={state.selectedClassId || 'all'}
                 onChange={e => setSelectedClassId(e.target.value)}
                 className="font-bold text-lg text-slate-900 bg-transparent border-b border-dashed border-slate-400 focus:outline-hidden cursor-pointer"
               >
+                <option value="all">All Training Classes ({state.classes.length})</option>
                 {state.classes.map(c => (
                   <option key={c.id} value={c.id}>
                     {c.title}
@@ -177,8 +186,12 @@ export const ScheduleBoard: React.FC = () => {
             </div>
             <p className="text-xs text-slate-500 mt-1 flex items-center gap-2">
               <Calendar className="h-3.5 w-3.5" />
-              <span>{selectedClass.startDate} through {selectedClass.endDate}</span>
-              {selectedClass.location && (
+              <span>
+                {isAllClasses
+                  ? `${state.classes.length} Training Classes • ${classShifts.length} Total Shifts`
+                  : `${selectedClass?.startDate} through ${selectedClass?.endDate}`}
+              </span>
+              {!isAllClasses && selectedClass?.location && (
                 <>
                   <span>•</span>
                   <span>{selectedClass.location}</span>
@@ -359,6 +372,11 @@ export const ScheduleBoard: React.FC = () => {
                       <span className="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 text-2xs font-mono font-medium">
                         {shift.date}
                       </span>
+                      {isAllClasses && state.classes.length > 1 && (
+                        <span className="px-2 py-0.5 rounded-md bg-indigo-900/90 text-indigo-200 border border-indigo-700/60 text-3xs font-semibold">
+                          {classMap.get(shift.classId)?.title || 'Class'}
+                        </span>
+                      )}
                     </div>
                     <div className="flex items-center gap-1.5 text-xs text-slate-400 mt-0.5">
                       <Clock className="h-3.5 w-3.5 text-slate-400" />

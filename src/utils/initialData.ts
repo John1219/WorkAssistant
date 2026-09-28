@@ -283,7 +283,7 @@ export const getInitialData = () => {
     shifts: sampleShifts,
     assignments: [] as Assignment[],
     taskTypes: DEFAULT_TASK_TYPES,
-    selectedClassId: sampleClass.id,
+    selectedClassId: 'all',
     selectedDate: day1
   };
 };

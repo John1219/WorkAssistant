@@ -59,16 +59,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     saveStoredState(state);
   }, [state]);
 
-  // Selected training class
+  // Selected training class (undefined if 'all')
   const selectedClass = useMemo(() => {
-    return state.classes.find(c => c.id === state.selectedClassId) || state.classes[0];
+    if (!state.selectedClassId || state.selectedClassId === 'all') return undefined;
+    return state.classes.find(c => c.id === state.selectedClassId);
   }, [state.classes, state.selectedClassId]);
 
-  // Shifts for current selected class
+  // Shifts for current selected class (or all shifts if 'all' is selected)
   const classShifts = useMemo(() => {
-    if (!selectedClass) return [];
-    return state.shifts.filter(s => s.classId === selectedClass.id);
-  }, [state.shifts, selectedClass]);
+    if (!state.selectedClassId || state.selectedClassId === 'all') {
+      return state.shifts;
+    }
+    return state.shifts.filter(s => s.classId === state.selectedClassId);
+  }, [state.shifts, state.selectedClassId]);
 
   // Detected conflicts
   const conflicts = useMemo(() => {
@@ -227,6 +230,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const clearClassAssignments = (classId?: string) => {
+    const isAll = (classId === 'all') || (!classId && (!state.selectedClassId || state.selectedClassId === 'all'));
+    if (isAll) {
+      setState(prev => ({
+        ...prev,
+        assignments: []
+      }));
+      return;
+    }
     const targetClassId = classId || selectedClass?.id;
     if (!targetClassId) return;
 
@@ -237,16 +248,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const runAutoSchedule = (preserveExisting: boolean = false) => {
-    const targetClassId = selectedClass?.id;
-    if (!targetClassId) return { filled: 0, total: 0, unfilledCount: 0 };
+    const isAll = !state.selectedClassId || state.selectedClassId === 'all';
+    const targetClassId = isAll ? undefined : (state.selectedClassId || undefined);
 
-    const targetShifts = state.shifts.filter(s => s.classId === targetClassId);
+    const targetShifts = isAll
+      ? state.shifts
+      : state.shifts.filter(s => s.classId === targetClassId);
+
+    if (targetShifts.length === 0) {
+      return { filled: 0, total: 0, unfilledCount: 0 };
+    }
+
     const result = autoScheduleShifts(state.employees, targetShifts, state.assignments, {
       preserveExisting,
       classId: targetClassId
     });
 
     setState(prev => {
+      if (isAll) {
+        return {
+          ...prev,
+          assignments: result.assignments
+        };
+      }
       // Keep assignments for OTHER classes
       const otherClassAssignments = prev.assignments.filter(a => a.classId !== targetClassId);
       return {
