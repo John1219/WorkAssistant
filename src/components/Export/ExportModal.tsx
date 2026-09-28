@@ -1,0 +1,376 @@
+import React, { useState, useRef } from 'react';
+import { useApp } from '../../context/AppContext';
+import {
+  X,
+  Download,
+  Upload,
+  FileSpreadsheet,
+  FileJson,
+  Copy,
+  Check,
+  RotateCcw,
+  Cloud,
+  Share2,
+  Trash2,
+  AlertTriangle
+} from 'lucide-react';
+import {
+  exportStateToJson,
+  parseImportedJson
+} from '../../utils/storage';
+import {
+  downloadJsonFile,
+  downloadCsvFile,
+  exportScheduleToCsv,
+  generateTextRoster
+} from '../../utils/export';
+
+interface ExportModalProps {
+  onClose: () => void;
+}
+
+export const ExportModal: React.FC<ExportModalProps> = ({ onClose }) => {
+  const {
+    state,
+    selectedClass,
+    importState,
+    resetToDemoData,
+    clearAllData
+  } = useApp();
+
+  const [activeTab, setActiveTab] = useState<'export' | 'import' | 'email' | 'cloud'>('export');
+  const [copiedEmail, setCopiedEmail] = useState(false);
+  const [jsonText, setJsonText] = useState('');
+  const [importStatus, setImportStatus] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const shiftsForCurrentClass = selectedClass
+    ? state.shifts.filter(s => s.classId === selectedClass.id)
+    : state.shifts;
+
+  const handleDownloadJson = () => {
+    const jsonStr = exportStateToJson(state);
+    const dateStr = new Date().toISOString().split('T')[0];
+    downloadJsonFile(jsonStr, `training-scheduler-backup-${dateStr}.json`);
+  };
+
+  const handleDownloadCsv = () => {
+    const csvStr = exportScheduleToCsv(selectedClass, shiftsForCurrentClass, state.assignments, state.employees);
+    const dateStr = new Date().toISOString().split('T')[0];
+    downloadCsvFile(csvStr, `training-schedule-${selectedClass?.title || 'all'}-${dateStr}.csv`);
+  };
+
+  const handleCopyEmailRoster = () => {
+    const text = generateTextRoster(selectedClass, shiftsForCurrentClass, state.assignments, state.employees);
+    navigator.clipboard.writeText(text);
+    setCopiedEmail(true);
+    setTimeout(() => setCopiedEmail(false), 3000);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = event => {
+      try {
+        const text = event.target?.result as string;
+        const parsed = parseImportedJson(text);
+        importState(parsed);
+        setImportStatus(`Successfully imported data from ${file.name}!`);
+      } catch (err) {
+        setImportStatus('Failed to parse JSON file. Please check file format.');
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const handlePasteImport = () => {
+    if (!jsonText.trim()) return;
+    try {
+      const parsed = parseImportedJson(jsonText);
+      importState(parsed);
+      setImportStatus('Successfully imported pasted state!');
+      setJsonText('');
+    } catch (err) {
+      setImportStatus('Invalid JSON text. Please check the pasted content.');
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+        {/* Header */}
+        <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center space-x-2.5">
+            <div className="p-2 bg-indigo-600 rounded-lg">
+              <Share2 className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-lg">Share, Export & Multi-User Sync</h3>
+              <p className="text-xs text-slate-400">
+                Move schedules between computers or send rosters to team members
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        {/* Tab Selector */}
+        <div className="flex border-b border-slate-200 bg-slate-50 px-6 pt-3 gap-2">
+          <button
+            onClick={() => setActiveTab('export')}
+            className={`pb-2.5 px-3 text-xs font-semibold border-b-2 transition-colors ${
+              activeTab === 'export'
+                ? 'border-indigo-600 text-indigo-600'
+                : 'border-transparent text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            Export Options
+          </button>
+          <button
+            onClick={() => setActiveTab('import')}
+            className={`pb-2.5 px-3 text-xs font-semibold border-b-2 transition-colors ${
+              activeTab === 'import'
+                ? 'border-indigo-600 text-indigo-600'
+                : 'border-transparent text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            Import Backup
+          </button>
+          <button
+            onClick={() => setActiveTab('email')}
+            className={`pb-2.5 px-3 text-xs font-semibold border-b-2 transition-colors ${
+              activeTab === 'email'
+                ? 'border-indigo-600 text-indigo-600'
+                : 'border-transparent text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            Copy for Email
+          </button>
+          <button
+            onClick={() => setActiveTab('cloud')}
+            className={`pb-2.5 px-3 text-xs font-semibold border-b-2 transition-colors ${
+              activeTab === 'cloud'
+                ? 'border-indigo-600 text-indigo-600'
+                : 'border-transparent text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            Cloud Collaboration
+          </button>
+        </div>
+
+        <div className="p-6">
+          {/* TAB 1: EXPORT */}
+          {activeTab === 'export' && (
+            <div className="space-y-4">
+              <p className="text-xs text-slate-600">
+                Download schedules in spreadsheet format or full application state to share with colleagues.
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <button
+                  onClick={handleDownloadCsv}
+                  className="p-4 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/50 text-left transition-all group cursor-pointer"
+                >
+                  <div className="p-2 bg-emerald-100 text-emerald-800 rounded-lg w-fit group-hover:scale-105 transition-transform">
+                    <FileSpreadsheet className="h-6 w-6" />
+                  </div>
+                  <div className="font-bold text-sm text-slate-900 mt-2">Export to Excel / CSV</div>
+                  <div className="text-2xs text-slate-500 mt-0.5">
+                    Formatted table of all dates, times, parking & support staff.
+                  </div>
+                </button>
+
+                <button
+                  onClick={handleDownloadJson}
+                  className="p-4 rounded-xl border border-slate-200 hover:border-indigo-500 hover:bg-indigo-50/50 text-left transition-all group cursor-pointer"
+                >
+                  <div className="p-2 bg-indigo-100 text-indigo-800 rounded-lg w-fit group-hover:scale-105 transition-transform">
+                    <FileJson className="h-6 w-6" />
+                  </div>
+                  <div className="font-bold text-sm text-slate-900 mt-2">Download JSON Backup</div>
+                  <div className="text-2xs text-slate-500 mt-0.5">
+                    Complete state including roster, classes, and all shift assignments.
+                  </div>
+                </button>
+              </div>
+
+              <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+                <span className="text-xs text-slate-500">Need sample demo data or reset?</span>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      if (window.confirm('Reset to standard sample training class and employees?')) {
+                        resetToDemoData();
+                        onClose();
+                      }
+                    }}
+                    className="px-3 py-1.5 rounded-lg border border-slate-300 text-2xs font-semibold text-slate-700 hover:bg-slate-100 flex items-center gap-1"
+                  >
+                    <RotateCcw className="h-3 w-3" />
+                    Load Demo Data
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (window.confirm('Delete all data and start completely blank?')) {
+                        clearAllData();
+                        onClose();
+                      }
+                    }}
+                    className="px-3 py-1.5 rounded-lg border border-rose-200 text-2xs font-semibold text-rose-700 hover:bg-rose-50 flex items-center gap-1"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                    Clear All
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 2: IMPORT */}
+          {activeTab === 'import' && (
+            <div className="space-y-4">
+              <p className="text-xs text-slate-600">
+                Import a schedule JSON file exported from another user or previous session.
+              </p>
+
+              {importStatus && (
+                <div className="p-3 bg-indigo-50 border border-indigo-200 text-indigo-900 rounded-lg text-xs">
+                  {importStatus}
+                </div>
+              )}
+
+              {/* Upload file box */}
+              <div>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  accept=".json"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full py-6 border-2 border-dashed border-slate-300 hover:border-indigo-500 rounded-xl bg-slate-50 hover:bg-indigo-50/30 flex flex-col items-center justify-center transition-colors cursor-pointer"
+                >
+                  <Upload className="h-8 w-8 text-indigo-600 mb-2" />
+                  <span className="text-xs font-bold text-slate-800">
+                    Click to select JSON backup file
+                  </span>
+                  <span className="text-2xs text-slate-500 mt-0.5">
+                    Supports .json files created by this app
+                  </span>
+                </button>
+              </div>
+
+              {/* Paste JSON */}
+              <div>
+                <label className="block text-2xs uppercase tracking-wider font-semibold text-slate-600 mb-1">
+                  Or paste JSON text directly:
+                </label>
+                <textarea
+                  rows={3}
+                  value={jsonText}
+                  onChange={e => setJsonText(e.target.value)}
+                  placeholder="Paste JSON here..."
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-mono"
+                />
+                <button
+                  disabled={!jsonText.trim()}
+                  onClick={handlePasteImport}
+                  className="mt-2 px-4 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-medium hover:bg-indigo-700 disabled:opacity-50"
+                >
+                  Apply Pasted JSON
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 3: EMAIL / TEXT */}
+          {activeTab === 'email' && (
+            <div className="space-y-4">
+              <p className="text-xs text-slate-600">
+                Copy a clean, formatted text summary of this training session's duty schedule to paste directly into an email, Slack, or Teams message.
+              </p>
+
+              <div className="relative">
+                <pre className="p-4 bg-slate-900 text-slate-100 rounded-xl text-2xs font-mono max-h-60 overflow-y-auto whitespace-pre-wrap">
+                  {generateTextRoster(
+                    selectedClass,
+                    shiftsForCurrentClass,
+                    state.assignments,
+                    state.employees
+                  )}
+                </pre>
+
+                <button
+                  onClick={handleCopyEmailRoster}
+                  className="absolute top-3 right-3 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-colors"
+                >
+                  {copiedEmail ? (
+                    <>
+                      <Check className="h-3.5 w-3.5 text-emerald-300" />
+                      <span>Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-3.5 w-3.5" />
+                      <span>Copy All Text</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 4: CLOUD SYNC */}
+          {activeTab === 'cloud' && (
+            <div className="space-y-4">
+              <div className="p-4 bg-indigo-50 border border-indigo-200 rounded-xl">
+                <div className="flex items-center gap-2 text-indigo-900 font-bold text-sm">
+                  <Cloud className="h-5 w-5 text-indigo-600" />
+                  <span>How Multiple People Collaborate on GitHub Pages</span>
+                </div>
+                <p className="text-xs text-indigo-800 mt-1 leading-relaxed">
+                  GitHub Pages hosts static websites with no monthly server cost. Here is how your team can collaborate effortlessly:
+                </p>
+              </div>
+
+              <div className="space-y-3 text-xs text-slate-700">
+                <div className="p-3 border border-slate-200 rounded-xl bg-slate-50">
+                  <strong className="text-slate-900 block font-semibold mb-1">
+                    Option 1: Backup & Share File (Zero Setup)
+                  </strong>
+                  Whenever you adjust the shifts, click <strong>Download JSON Backup</strong> and send the small file to your coworker. They click <strong>Import Backup</strong> to have the exact identical schedule on their machine!
+                </div>
+
+                <div className="p-3 border border-slate-200 rounded-xl bg-slate-50">
+                  <strong className="text-slate-900 block font-semibold mb-1">
+                    Option 2: Real-time Cloud Sync (Free Firebase)
+                  </strong>
+                  If you want live Google-Docs style simultaneous editing across multiple browsers, you can connect a free Firebase Realtime Database. Any changes made by anyone will reflect live on everyone's screen.
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-4 py-1.5 bg-slate-800 text-white rounded-lg text-xs font-semibold hover:bg-slate-700"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+export default ExportModal;

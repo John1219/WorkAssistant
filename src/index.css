@@ -1,0 +1,40 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    @apply bg-slate-50 text-slate-900 antialiased min-h-screen selection:bg-indigo-500 selection:text-white;
+  }
+}
+
+/* Print optimizations for physical clipboard / duty roster printing */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  .print-page-break {
+    page-break-after: always;
+    break-after: page;
+  }
+
+  .print-card {
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+  }
+}
+
+@media screen {
+  .print-only {
+    display: none !important;
+  }
+}
