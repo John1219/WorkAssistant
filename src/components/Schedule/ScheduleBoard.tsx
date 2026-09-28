@@ -178,12 +178,6 @@ export const ScheduleBoard: React.FC = () => {
             <p className="text-xs text-slate-500 mt-1 flex items-center gap-2">
               <Calendar className="h-3.5 w-3.5" />
               <span>{selectedClass.startDate} through {selectedClass.endDate}</span>
-              {selectedClass.location && (
-                <>
-                  <span>•</span>
-                  <span>{selectedClass.location}</span>
-                </>
-              )}
             </p>
           </div>
 

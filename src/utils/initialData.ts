@@ -197,7 +197,6 @@ export const getInitialData = () => {
   const sampleClass: TrainingClass = {
     id: 'class-sample-1',
     title: 'Workforce Safety & Leadership Academy',
-    location: 'Building C - North Auditorium & Lots A/B',
     startDate: day1,
     endDate: day3,
     description: '3-day comprehensive operational and compliance training session.',
