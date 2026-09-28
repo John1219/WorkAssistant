@@ -51,7 +51,14 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [state, setState] = useState<AppState>(() => loadStoredState());
+  const [state, setState] = useState<AppState>(() => {
+    const loaded = loadStoredState();
+    // Default to 'all' on startup
+    return {
+      ...loaded,
+      selectedClassId: loaded.selectedClassId === 'class-sample-1' ? 'all' : (loaded.selectedClassId || 'all')
+    };
+  });
   const [activeTab, setActiveTab] = useState<NavTab>('schedule');
 
   // Auto-save on any state change
