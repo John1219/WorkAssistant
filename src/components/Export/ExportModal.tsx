@@ -27,19 +27,29 @@ import {
 
 interface ExportModalProps {
   onClose: () => void;
+  initialTab?: 'export' | 'import' | 'email' | 'cloud';
 }
 
-export const ExportModal: React.FC<ExportModalProps> = ({ onClose }) => {
+export const ExportModal: React.FC<ExportModalProps> = ({ onClose, initialTab = 'export' }) => {
   const {
     state,
     selectedClass,
     importState,
     resetToDemoData,
-    clearAllData
+    clearAllData,
+    syncStatus,
+    workspaceId,
+    setWorkspaceId,
+    lastSyncTime,
+    forceCloudSync
   } = useApp();
 
-  const [activeTab, setActiveTab] = useState<'export' | 'import' | 'email' | 'cloud'>('export');
+  const [activeTab, setActiveTab] = useState<'export' | 'import' | 'email' | 'cloud'>(initialTab);
   const [copiedEmail, setCopiedEmail] = useState(false);
+  const [copiedInvite, setCopiedInvite] = useState(false);
+  const [newWorkspaceInput, setNewWorkspaceInput] = useState(workspaceId);
+  const [isSyncingNow, setIsSyncingNow] = useState(false);
+  const [syncFeedback, setSyncFeedback] = useState<string | null>(null);
   const [jsonText, setJsonText] = useState('');
   const [importStatus, setImportStatus] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -332,29 +342,148 @@ export const ExportModal: React.FC<ExportModalProps> = ({ onClose }) => {
           {/* TAB 4: CLOUD SYNC */}
           {activeTab === 'cloud' && (
             <div className="space-y-4">
-              <div className="p-4 bg-indigo-50 border border-indigo-200 rounded-xl">
-                <div className="flex items-center gap-2 text-indigo-900 font-bold text-sm">
-                  <Cloud className="h-5 w-5 text-indigo-600" />
-                  <span>How Multiple People Collaborate on GitHub Pages</span>
+              {/* Connection Status Card */}
+              <div
+                className={`p-4 rounded-xl border flex items-center justify-between ${
+                  syncStatus === 'connected'
+                    ? 'bg-emerald-50/80 border-emerald-200 text-emerald-950'
+                    : syncStatus === 'syncing'
+                    ? 'bg-amber-50/80 border-amber-200 text-amber-950'
+                    : 'bg-slate-50 border-slate-200 text-slate-800'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`h-3 w-3 rounded-full shrink-0 ${
+                      syncStatus === 'connected'
+                        ? 'bg-emerald-500 animate-pulse'
+                        : syncStatus === 'syncing'
+                        ? 'bg-amber-500 animate-spin'
+                        : 'bg-slate-400'
+                    }`}
+                  />
+                  <div>
+                    <div className="font-bold text-xs uppercase tracking-wider">
+                      {syncStatus === 'connected'
+                        ? 'Firebase Real-Time Cloud: Connected'
+                        : syncStatus === 'syncing'
+                        ? 'Syncing with Cloud...'
+                        : 'Offline / Local Cache'}
+                    </div>
+                    <div className="text-2xs opacity-80 mt-0.5">
+                      {lastSyncTime
+                        ? `Last synced: ${lastSyncTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`
+                        : 'Connected to Firestore Native'}
+                    </div>
+                  </div>
                 </div>
-                <p className="text-xs text-indigo-800 mt-1 leading-relaxed">
-                  GitHub Pages hosts static websites with no monthly server cost. Here is how your team can collaborate effortlessly:
-                </p>
+
+                <button
+                  disabled={isSyncingNow}
+                  onClick={async () => {
+                    setIsSyncingNow(true);
+                    setSyncFeedback(null);
+                    try {
+                      await forceCloudSync();
+                      setSyncFeedback('Successfully synced to cloud!');
+                      setTimeout(() => setSyncFeedback(null), 3000);
+                    } catch {
+                      setSyncFeedback('Sync failed. Please check internet connection.');
+                    } finally {
+                      setIsSyncingNow(false);
+                    }
+                  }}
+                  className="px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-semibold shadow-2xs transition-colors shrink-0 disabled:opacity-50"
+                >
+                  {isSyncingNow ? 'Syncing...' : 'Sync Now'}
+                </button>
               </div>
 
-              <div className="space-y-3 text-xs text-slate-700">
-                <div className="p-3 border border-slate-200 rounded-xl bg-slate-50">
-                  <strong className="text-slate-900 block font-semibold mb-1">
-                    Option 1: Backup & Share File (Zero Setup)
-                  </strong>
-                  Whenever you adjust the shifts, click <strong>Download JSON Backup</strong> and send the small file to your coworker. They click <strong>Import Backup</strong> to have the exact identical schedule on their machine!
+              {syncFeedback && (
+                <div className="p-2.5 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-900 text-xs flex items-center gap-1.5 animate-in fade-in">
+                  <Check className="h-4 w-4 text-indigo-600 shrink-0" />
+                  <span>{syncFeedback}</span>
+                </div>
+              )}
+
+              {/* Team Workspace ID & Switch */}
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-1">
+                    Team Workspace ID
+                  </label>
+                  <p className="text-2xs text-slate-500 mb-2">
+                    All coordinators and devices sharing this Workspace ID automatically sync shift schedules and employee rosters in real time.
+                  </p>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={newWorkspaceInput}
+                      onChange={e => setNewWorkspaceInput(e.target.value)}
+                      placeholder="e.g. operations-training or north-campus"
+                      className="flex-1 px-3 py-1.5 border border-slate-300 rounded-lg text-xs font-mono bg-white outline-hidden focus:ring-2 focus:ring-indigo-500"
+                    />
+                    <button
+                      onClick={() => {
+                        if (newWorkspaceInput.trim()) {
+                          setWorkspaceId(newWorkspaceInput.trim());
+                          setSyncFeedback(`Switched to workspace "${newWorkspaceInput.trim()}"!`);
+                          setTimeout(() => setSyncFeedback(null), 3000);
+                        }
+                      }}
+                      className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-xs shrink-0 transition-colors"
+                    >
+                      Join / Switch
+                    </button>
+                  </div>
                 </div>
 
-                <div className="p-3 border border-slate-200 rounded-xl bg-slate-50">
-                  <strong className="text-slate-900 block font-semibold mb-1">
-                    Option 2: Real-time Cloud Sync (Free Firebase)
-                  </strong>
-                  If you want live Google-Docs style simultaneous editing across multiple browsers, you can connect a free Firebase Realtime Database. Any changes made by anyone will reflect live on everyone's screen.
+                {/* 1-Click Shareable Invite Link */}
+                <div className="pt-2 border-t border-slate-200/80">
+                  <span className="block text-2xs font-semibold text-slate-600 mb-1">
+                    1-Click Team Member Link:
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      readOnly
+                      value={(() => {
+                        try {
+                          const url = new URL(window.location.href);
+                          url.searchParams.set('team', workspaceId);
+                          return url.toString();
+                        } catch {
+                          return `?team=${workspaceId}`;
+                        }
+                      })()}
+                      className="flex-1 px-2.5 py-1.5 bg-slate-100 border border-slate-200 rounded-lg text-3xs font-mono text-slate-600 truncate"
+                    />
+                    <button
+                      onClick={() => {
+                        const url = new URL(window.location.href);
+                        url.searchParams.set('team', workspaceId);
+                        navigator.clipboard.writeText(url.toString());
+                        setCopiedInvite(true);
+                        setTimeout(() => setCopiedInvite(false), 3000);
+                      }}
+                      className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shrink-0 transition-colors"
+                    >
+                      {copiedInvite ? (
+                        <>
+                          <Check className="h-3.5 w-3.5 text-emerald-400" />
+                          <span>Copied!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="h-3.5 w-3.5" />
+                          <span>Copy Link</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  <p className="text-3xs text-slate-400 mt-1">
+                    Send this link to anyone on your team via text or email—opening it loads directly into your shared schedule.
+                  </p>
                 </div>
               </div>
             </div>

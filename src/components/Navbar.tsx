@@ -8,7 +8,8 @@ import {
   Printer,
   Download,
   AlertTriangle,
-  HelpCircle
+  HelpCircle,
+  Cloud
 } from 'lucide-react';
 import ExportModal from './Export/ExportModal';
 
@@ -18,8 +19,9 @@ interface NavbarProps {
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ onOpenConflicts, onOpenHelp }) => {
-  const { activeTab, setActiveTab, conflicts } = useApp();
+  const { activeTab, setActiveTab, conflicts, syncStatus, workspaceId } = useApp();
   const [showExportModal, setShowExportModal] = useState(false);
+  const [exportModalTab, setExportModalTab] = useState<'export' | 'cloud'>('export');
 
   const tabs: { id: NavTab; label: string; mobileLabel: string; icon: React.ComponentType<{ className?: string }> }[] = [
     { id: 'schedule', label: 'Schedule Board', mobileLabel: 'Schedule', icon: CalendarDays },
@@ -76,8 +78,38 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenConflicts, onOpenHelp }) =
               })}
             </nav>
 
-            {/* Actions: Conflicts, Share/Export, Help */}
+            {/* Actions: Cloud Sync, Conflicts, Share/Export, Help */}
             <div className="flex items-center space-x-1.5 sm:space-x-2">
+              {/* Real-time Cloud Sync Status Button */}
+              <button
+                onClick={() => {
+                  setExportModalTab('cloud');
+                  setShowExportModal(true);
+                }}
+                className={`flex items-center space-x-1 px-2 sm:px-2.5 py-1.5 rounded-lg border text-xs font-semibold transition-all ${
+                  syncStatus === 'connected'
+                    ? 'bg-emerald-950/80 border-emerald-500/40 text-emerald-300 hover:bg-emerald-900/80'
+                    : syncStatus === 'syncing'
+                    ? 'bg-amber-950/80 border-amber-500/40 text-amber-300 hover:bg-amber-900/80'
+                    : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700'
+                }`}
+                title={`Cloud Sync: ${syncStatus}. Workspace: ${workspaceId}. Click to manage`}
+              >
+                <span
+                  className={`h-2 w-2 rounded-full shrink-0 ${
+                    syncStatus === 'connected'
+                      ? 'bg-emerald-400 animate-pulse'
+                      : syncStatus === 'syncing'
+                      ? 'bg-amber-400 animate-spin'
+                      : 'bg-slate-500'
+                  }`}
+                />
+                <Cloud className="h-3.5 w-3.5 shrink-0" />
+                <span className="hidden sm:inline">
+                  {syncStatus === 'connected' ? 'Live Sync' : syncStatus === 'syncing' ? 'Syncing...' : 'Offline'}
+                </span>
+              </button>
+
               {conflicts.length > 0 && (
                 <button
                   onClick={onOpenConflicts}
@@ -91,7 +123,10 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenConflicts, onOpenHelp }) =
               )}
 
               <button
-                onClick={() => setShowExportModal(true)}
+                onClick={() => {
+                  setExportModalTab('export');
+                  setShowExportModal(true);
+                }}
                 className="flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-slate-800 text-slate-200 hover:bg-slate-700 hover:text-white border border-slate-700 text-xs font-medium transition-colors"
                 title="Export or Import Schedule & Data"
               >
@@ -134,7 +169,10 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenConflicts, onOpenHelp }) =
       </nav>
 
       {showExportModal && (
-        <ExportModal onClose={() => setShowExportModal(false)} />
+        <ExportModal
+          initialTab={exportModalTab}
+          onClose={() => setShowExportModal(false)}
+        />
       )}
     </>
   );

@@ -1,8 +1,9 @@
-import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useRef } from 'react';
 import { AppState, Employee, TrainingClass, Shift, Assignment, TaskType, ScheduleConflict } from '../types';
 import { loadStoredState, saveStoredState } from '../utils/storage';
 import { getInitialData } from '../utils/initialData';
 import { autoScheduleShifts, detectConflicts } from '../utils/scheduler';
+import { subscribeToWorkspace, pushWorkspaceState, SyncStatus } from '../services/firebase';
 import confetti from 'canvas-confetti';
 
 export type NavTab = 'schedule' | 'roster' | 'classes' | 'summary' | 'print';
@@ -14,6 +15,13 @@ interface AppContextType {
   conflicts: ScheduleConflict[];
   selectedClass: TrainingClass | undefined;
   classShifts: Shift[];
+
+  // Cloud Real-Time Sync
+  syncStatus: SyncStatus;
+  workspaceId: string;
+  setWorkspaceId: (id: string) => void;
+  lastSyncTime: Date | null;
+  forceCloudSync: () => Promise<void>;
 
   // Employee actions
   addEmployee: (emp: Omit<Employee, 'id'>) => void;
@@ -50,6 +58,22 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
+// Helper to resolve workspace ID from query param or localStorage
+const getInitialWorkspaceId = (): string => {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const urlTeam = params.get('team') || params.get('workspace');
+    if (urlTeam && urlTeam.trim()) {
+      const clean = urlTeam.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '-');
+      localStorage.setItem('training_scheduler_workspace_id', clean);
+      return clean;
+    }
+    return localStorage.getItem('training_scheduler_workspace_id') || 'default';
+  } catch {
+    return 'default';
+  }
+};
+
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, setState] = useState<AppState>(() => {
     const loaded = loadStoredState();
@@ -61,10 +85,118 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
   const [activeTab, setActiveTab] = useState<NavTab>('schedule');
 
-  // Auto-save on any state change
+  // Cloud Real-Time Sync State
+  const [workspaceId, setWorkspaceIdState] = useState<string>(getInitialWorkspaceId);
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>('syncing');
+  const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
+
+  const isRemoteUpdateRef = useRef(false);
+  const debounceTimerRef = useRef<number | null>(null);
+  const hasInitializedFromCloudRef = useRef(false);
+
+  const setWorkspaceId = (id: string) => {
+    const clean = (id || 'default').trim().toLowerCase().replace(/[^a-z0-9_-]/g, '-');
+    localStorage.setItem('training_scheduler_workspace_id', clean);
+    setWorkspaceIdState(clean);
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set('team', clean);
+      window.history.replaceState({}, '', url.toString());
+    } catch {
+      // ignore
+    }
+  };
+
+  // Real-time listener for incoming Firestore updates
   useEffect(() => {
+    setSyncStatus('syncing');
+    hasInitializedFromCloudRef.current = false;
+
+    const unsubscribe = subscribeToWorkspace(
+      workspaceId,
+      cloudData => {
+        setSyncStatus('connected');
+        setLastSyncTime(new Date());
+
+        // If cloud document has data, merge into local state
+        if (cloudData && (cloudData.classes || cloudData.shifts || cloudData.employees)) {
+          isRemoteUpdateRef.current = true;
+          setState(prev => ({
+            ...prev,
+            employees: cloudData.employees ?? prev.employees,
+            classes: cloudData.classes ?? prev.classes,
+            shifts: cloudData.shifts ?? prev.shifts,
+            assignments: cloudData.assignments ?? prev.assignments,
+            taskTypes: cloudData.taskTypes ?? prev.taskTypes,
+            selectedClassId:
+              cloudData.selectedClassId !== undefined ? cloudData.selectedClassId : prev.selectedClassId
+          }));
+          setTimeout(() => {
+            isRemoteUpdateRef.current = false;
+          }, 150);
+        } else if (!hasInitializedFromCloudRef.current) {
+          // Cloud workspace doc is new/empty -> Seed with local state
+          hasInitializedFromCloudRef.current = true;
+          pushWorkspaceState(workspaceId, state).catch(err => {
+            console.warn('[Sync] Initial push error:', err);
+          });
+        }
+      },
+      err => {
+        console.warn('[Sync] Listener error:', err);
+        setSyncStatus('offline');
+      }
+    );
+
+    return () => {
+      unsubscribe();
+    };
+  }, [workspaceId]);
+
+  // Outbound sync: Debounced push to Firestore on local state change
+  useEffect(() => {
+    // Always persist to localStorage for offline access
     saveStoredState(state);
-  }, [state]);
+
+    // If update arrived from Firestore, do NOT echo it back
+    if (isRemoteUpdateRef.current) {
+      return;
+    }
+
+    if (debounceTimerRef.current) {
+      window.clearTimeout(debounceTimerRef.current);
+    }
+
+    setSyncStatus('syncing');
+    debounceTimerRef.current = window.setTimeout(async () => {
+      try {
+        await pushWorkspaceState(workspaceId, state);
+        setSyncStatus('connected');
+        setLastSyncTime(new Date());
+      } catch (err) {
+        console.warn('[Sync] Failed to push state to Firestore:', err);
+        setSyncStatus('offline');
+      }
+    }, 400);
+
+    return () => {
+      if (debounceTimerRef.current) {
+        window.clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [state, workspaceId]);
+
+  const forceCloudSync = async () => {
+    setSyncStatus('syncing');
+    try {
+      await pushWorkspaceState(workspaceId, state);
+      setSyncStatus('connected');
+      setLastSyncTime(new Date());
+    } catch (err) {
+      setSyncStatus('error');
+      throw err;
+    }
+  };
 
   // Selected training class (undefined if 'all')
   const selectedClass = useMemo(() => {
@@ -370,7 +502,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addTaskType,
         importState,
         resetToDemoData,
-        clearAllData
+        clearAllData,
+        syncStatus,
+        workspaceId,
+        setWorkspaceId,
+        lastSyncTime,
+        forceCloudSync
       }}
     >
       {children}
