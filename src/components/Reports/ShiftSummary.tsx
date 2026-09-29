@@ -160,7 +160,101 @@ export const ShiftSummary: React.FC = () => {
           </span>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Mobile Card List (Phones) */}
+        <div className="md:hidden divide-y divide-slate-100">
+          {employeeStats.map(item => {
+            const { employee, total, parking, support, other } = item;
+            const max = employee.maxShifts || 4;
+            const percent = Math.min(100, Math.round((total / max) * 100));
+
+            return (
+              <div key={employee.id} className="p-4 space-y-3">
+                {/* Header: Name, Dept, Status Pill */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="font-semibold text-slate-900 text-sm truncate">
+                      {employee.name}
+                    </div>
+                    <div className="text-2xs text-slate-500 truncate">
+                      {employee.department || 'General'}
+                    </div>
+                  </div>
+
+                  {/* Status Badge */}
+                  <div className="shrink-0">
+                    {total === 0 ? (
+                      <span className="px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-2xs font-medium">
+                        Unassigned
+                      </span>
+                    ) : parking > 0 && support > 0 ? (
+                      <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-2xs font-semibold flex items-center gap-1">
+                        <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+                        Balanced Split
+                      </span>
+                    ) : parking > 0 ? (
+                      <span className="px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 text-2xs font-semibold">
+                        Only Parking
+                      </span>
+                    ) : (
+                      <span className="px-2.5 py-1 rounded-full bg-blue-100 text-blue-800 text-2xs font-semibold">
+                        Only Support
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Capacity Progress Bar */}
+                <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200/80">
+                  <div className="flex justify-between items-center text-2xs mb-1 font-semibold">
+                    <span className="text-slate-600">Assigned Shifts</span>
+                    <span className={total > max ? 'text-rose-600 font-bold' : 'text-slate-900 font-bold'}>
+                      {total} of {max} max ({percent}%)
+                    </span>
+                  </div>
+                  <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${
+                        total > max
+                          ? 'bg-rose-500'
+                          : total === max
+                          ? 'bg-emerald-500'
+                          : 'bg-indigo-600'
+                      }`}
+                      style={{ width: `${percent}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Duty Breakdown Pills */}
+                <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                  <div className="p-2 rounded-lg bg-amber-50 border border-amber-200">
+                    <div className="text-3xs uppercase font-bold text-amber-800 flex items-center justify-center gap-1">
+                      <Car className="h-3 w-3" /> Parking
+                    </div>
+                    <div className="text-base font-bold text-amber-950 mt-0.5">{parking}</div>
+                  </div>
+
+                  <div className="p-2 rounded-lg bg-blue-50 border border-blue-200">
+                    <div className="text-3xs uppercase font-bold text-blue-800 flex items-center justify-center gap-1">
+                      <Users className="h-3 w-3" /> Support
+                    </div>
+                    <div className="text-base font-bold text-blue-950 mt-0.5">{support}</div>
+                  </div>
+
+                  <div className="p-2 rounded-lg bg-slate-50 border border-slate-200">
+                    <div className="text-3xs uppercase font-bold text-slate-600">
+                      Other
+                    </div>
+                    <div className="text-base font-bold text-slate-800 mt-0.5">{other}</div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Desktop Table (Medium & Large screens) */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="min-w-full divide-y divide-slate-200 text-left text-xs">
             <thead className="bg-slate-50 text-slate-600 uppercase tracking-wider font-semibold">
               <tr>

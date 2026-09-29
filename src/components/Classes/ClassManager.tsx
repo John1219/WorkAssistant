@@ -423,18 +423,18 @@ export const ClassManager: React.FC = () => {
                       </div>
 
                       {/* Right: Actions */}
-                      <div className="flex items-center gap-1.5 self-end md:self-auto">
+                      <div className="flex items-center justify-end w-full md:w-auto gap-2 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100">
                         <button
                           onClick={() => handleDuplicateShift(shift)}
-                          className="px-2.5 py-1 rounded-lg text-slate-600 hover:text-indigo-700 hover:bg-indigo-50 border border-slate-200 text-xs font-medium flex items-center gap-1 transition-colors"
+                          className="px-3 py-1.5 rounded-lg text-slate-600 hover:text-indigo-700 hover:bg-indigo-50 border border-slate-200 text-xs font-medium flex items-center gap-1.5 transition-colors min-h-[36px]"
                           title="Copy this shift schedule to the next day"
                         >
-                          <Copy className="h-3 w-3" />
+                          <Copy className="h-3.5 w-3.5" />
                           <span>Copy to +1 Day</span>
                         </button>
                         <button
                           onClick={() => handleOpenEditShift(shift)}
-                          className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition-colors"
+                          className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center border border-slate-200"
                           title="Edit Shift Requirements"
                         >
                           <Edit2 className="h-3.5 w-3.5" />
@@ -445,7 +445,7 @@ export const ClassManager: React.FC = () => {
                               deleteShift(shift.id);
                             }
                           }}
-                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                          className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center border border-slate-200"
                           title="Delete Shift"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -475,7 +475,7 @@ export const ClassManager: React.FC = () => {
                 ✕
               </button>
             </div>
-            <form onSubmit={handleSaveClass} className="p-6 space-y-4">
+            <form onSubmit={handleSaveClass} className="p-4 sm:p-6 space-y-4 max-h-[80vh] overflow-y-auto">
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">
                   Class / Event Title *
@@ -578,8 +578,8 @@ export const ClassManager: React.FC = () => {
                 ✕
               </button>
             </div>
-            <form onSubmit={handleSaveShift} className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-3">
+            <form onSubmit={handleSaveShift} className="p-4 sm:p-6 space-y-4 max-h-[80vh] overflow-y-auto">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">
                     Shift Date *
@@ -643,33 +643,33 @@ export const ClassManager: React.FC = () => {
                   {requirements.map(req => (
                     <div
                       key={req.taskId}
-                      className="flex items-center justify-between p-2 bg-white rounded-lg border border-slate-200"
+                      className="flex items-center justify-between p-2.5 bg-white rounded-lg border border-slate-200 gap-2"
                     >
-                      <div className="flex items-center gap-2">
-                        {req.taskId === 'parking' && <Car className="h-4 w-4 text-amber-600" />}
-                        {req.taskId === 'support' && <Users className="h-4 w-4 text-blue-600" />}
-                        {req.taskId === 'registration' && <ClipboardList className="h-4 w-4 text-emerald-600" />}
-                        {req.taskId === 'floater' && <Shield className="h-4 w-4 text-purple-600" />}
-                        <span className="text-xs font-medium text-slate-900">{req.taskName}</span>
+                      <div className="flex items-center gap-2 min-w-0">
+                        {req.taskId === 'parking' && <Car className="h-4 w-4 text-amber-600 shrink-0" />}
+                        {req.taskId === 'support' && <Users className="h-4 w-4 text-blue-600 shrink-0" />}
+                        {req.taskId === 'registration' && <ClipboardList className="h-4 w-4 text-emerald-600 shrink-0" />}
+                        {req.taskId === 'floater' && <Shield className="h-4 w-4 text-purple-600 shrink-0" />}
+                        <span className="text-xs font-medium text-slate-900 truncate">{req.taskName}</span>
                       </div>
 
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-slate-500">Need:</span>
-                        <div className="flex items-center border border-slate-300 rounded-lg overflow-hidden bg-white">
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="text-xs text-slate-500 hidden sm:inline">Need:</span>
+                        <div className="flex items-center border border-slate-300 rounded-lg overflow-hidden bg-white shadow-2xs">
                           <button
                             type="button"
                             onClick={() => updateRequirementCount(req.taskId, req.requiredCount - 1)}
-                            className="px-2.5 py-1 text-slate-600 hover:bg-slate-100 text-xs font-bold"
+                            className="px-3 py-1.5 text-slate-700 hover:bg-slate-100 text-sm font-bold min-w-[32px] min-h-[32px] flex items-center justify-center"
                           >
                             –
                           </button>
-                          <span className="px-3 py-1 font-bold text-xs text-slate-900 min-w-8 text-center">
+                          <span className="px-2.5 py-1 font-bold text-xs text-slate-900 min-w-7 text-center">
                             {req.requiredCount}
                           </span>
                           <button
                             type="button"
                             onClick={() => updateRequirementCount(req.taskId, req.requiredCount + 1)}
-                            className="px-2.5 py-1 text-slate-600 hover:bg-slate-100 text-xs font-bold"
+                            className="px-3 py-1.5 text-slate-700 hover:bg-slate-100 text-sm font-bold min-w-[32px] min-h-[32px] flex items-center justify-center"
                           >
                             +
                           </button>

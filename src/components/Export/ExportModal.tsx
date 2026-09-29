@@ -101,31 +101,31 @@ export const ExportModal: React.FC<ExportModalProps> = ({ onClose }) => {
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
         {/* Header */}
-        <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-2.5">
-            <div className="p-2 bg-indigo-600 rounded-lg">
+        <div className="bg-slate-900 text-white px-4 sm:px-6 py-3.5 sm:py-4 flex items-center justify-between">
+          <div className="flex items-center space-x-2.5 min-w-0">
+            <div className="p-2 bg-indigo-600 rounded-lg shrink-0">
               <Share2 className="h-5 w-5" />
             </div>
-            <div>
-              <h3 className="font-semibold text-lg">Share, Export & Multi-User Sync</h3>
-              <p className="text-xs text-slate-400">
-                Move schedules between computers or send rosters to team members
+            <div className="min-w-0">
+              <h3 className="font-semibold text-base sm:text-lg truncate">Share, Export & Multi-User Sync</h3>
+              <p className="text-2xs sm:text-xs text-slate-400 truncate">
+                Move schedules between computers or send rosters
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800"
+            className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 shrink-0 ml-2"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
         {/* Tab Selector */}
-        <div className="flex border-b border-slate-200 bg-slate-50 px-6 pt-3 gap-2">
+        <div className="flex border-b border-slate-200 bg-slate-50 px-3 sm:px-6 pt-2 sm:pt-3 gap-1.5 sm:gap-2 overflow-x-auto whitespace-nowrap scrollbar-none">
           <button
             onClick={() => setActiveTab('export')}
-            className={`pb-2.5 px-3 text-xs font-semibold border-b-2 transition-colors ${
+            className={`pb-2 px-2.5 sm:px-3 text-xs font-semibold border-b-2 transition-colors shrink-0 ${
               activeTab === 'export'
                 ? 'border-indigo-600 text-indigo-600'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
@@ -135,7 +135,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({ onClose }) => {
           </button>
           <button
             onClick={() => setActiveTab('import')}
-            className={`pb-2.5 px-3 text-xs font-semibold border-b-2 transition-colors ${
+            className={`pb-2 px-2.5 sm:px-3 text-xs font-semibold border-b-2 transition-colors shrink-0 ${
               activeTab === 'import'
                 ? 'border-indigo-600 text-indigo-600'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
@@ -145,7 +145,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({ onClose }) => {
           </button>
           <button
             onClick={() => setActiveTab('email')}
-            className={`pb-2.5 px-3 text-xs font-semibold border-b-2 transition-colors ${
+            className={`pb-2 px-2.5 sm:px-3 text-xs font-semibold border-b-2 transition-colors shrink-0 ${
               activeTab === 'email'
                 ? 'border-indigo-600 text-indigo-600'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
@@ -155,7 +155,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({ onClose }) => {
           </button>
           <button
             onClick={() => setActiveTab('cloud')}
-            className={`pb-2.5 px-3 text-xs font-semibold border-b-2 transition-colors ${
+            className={`pb-2 px-2.5 sm:px-3 text-xs font-semibold border-b-2 transition-colors shrink-0 ${
               activeTab === 'cloud'
                 ? 'border-indigo-600 text-indigo-600'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
@@ -165,7 +165,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({ onClose }) => {
           </button>
         </div>
 
-        <div className="p-6">
+        <div className="p-4 sm:p-6 max-h-[75vh] overflow-y-auto">
           {/* TAB 1: EXPORT */}
           {activeTab === 'export' && (
             <div className="space-y-4">

@@ -25,7 +25,7 @@ const AppContent: React.FC = () => {
       />
 
       {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 pt-4 pb-24 md:pb-8">
         {activeTab === 'schedule' && <ScheduleBoard />}
         {activeTab === 'roster' && <EmployeeList />}
         {activeTab === 'classes' && <ClassManager />}
@@ -34,7 +34,7 @@ const AppContent: React.FC = () => {
       </main>
 
       {/* Footer */}
-      <footer className="no-print bg-white border-t border-slate-200 py-6 mt-12 text-slate-500 text-xs">
+      <footer className="no-print bg-white border-t border-slate-200 py-6 mt-6 md:mt-12 text-slate-500 text-xs pb-24 md:pb-6">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center space-x-2">
             <CalendarDays className="h-4 w-4 text-indigo-600" />

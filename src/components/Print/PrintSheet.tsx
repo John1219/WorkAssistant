@@ -45,26 +45,26 @@ export const PrintSheet: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto">
           <button
             onClick={handleDownloadCsv}
-            className="px-3 py-1.5 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+            className="px-3 py-2.5 sm:py-1.5 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors min-h-[40px] sm:min-h-0"
           >
-            <Download className="h-4 w-4" />
-            <span>Export to Excel (CSV)</span>
+            <Download className="h-4 w-4 shrink-0" />
+            <span className="truncate">Export CSV</span>
           </button>
           <button
             onClick={handlePrint}
-            className="px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-colors"
+            className="px-4 py-2.5 sm:py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-xs transition-colors min-h-[40px] sm:min-h-0"
           >
-            <Printer className="h-4 w-4" />
-            <span>Print Duty Sheet</span>
+            <Printer className="h-4 w-4 shrink-0" />
+            <span className="truncate">Print Sheet</span>
           </button>
         </div>
       </div>
 
       {/* Printable Sheet Layout */}
-      <div className="bg-white p-8 sm:p-10 rounded-2xl border border-slate-200 shadow-sm print:border-none print:shadow-none print:p-0">
+      <div className="bg-white p-4 sm:p-8 lg:p-10 rounded-2xl border border-slate-200 shadow-sm print:border-none print:shadow-none print:p-0">
         {/* Document Header */}
         <div className="border-b-2 border-slate-900 pb-4 mb-6">
           <div className="flex justify-between items-start">

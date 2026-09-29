@@ -166,15 +166,15 @@ export const ScheduleBoard: React.FC = () => {
       <div className="bg-white p-5 rounded-2xl shadow-xs border border-slate-200">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           {/* Class Title & Details */}
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 font-semibold text-2xs uppercase">
+          <div className="min-w-0">
+            <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 font-semibold text-2xs uppercase whitespace-nowrap shrink-0">
                 {isAllClasses ? 'All Classes View' : 'Active Training Event'}
               </span>
               <select
                 value={state.selectedClassId || 'all'}
                 onChange={e => setSelectedClassId(e.target.value)}
-                className="font-bold text-lg text-slate-900 bg-transparent border-b border-dashed border-slate-400 focus:outline-hidden cursor-pointer"
+                className="font-bold text-base sm:text-lg text-slate-900 bg-transparent border-b border-dashed border-slate-400 focus:outline-hidden cursor-pointer max-w-full truncate py-0.5"
               >
                 <option value="all">All Training Classes ({state.classes.length})</option>
                 {state.classes.map(c => (
@@ -184,8 +184,8 @@ export const ScheduleBoard: React.FC = () => {
                 ))}
               </select>
             </div>
-            <p className="text-xs text-slate-500 mt-1 flex items-center gap-2">
-              <Calendar className="h-3.5 w-3.5" />
+            <p className="text-xs text-slate-500 mt-1 flex flex-wrap items-center gap-1.5 sm:gap-2">
+              <Calendar className="h-3.5 w-3.5 shrink-0" />
               <span>
                 {isAllClasses
                   ? `${state.classes.length} Training Classes • ${classShifts.length} Total Shifts`
@@ -193,46 +193,47 @@ export const ScheduleBoard: React.FC = () => {
               </span>
               {!isAllClasses && selectedClass?.location && (
                 <>
-                  <span>•</span>
-                  <span>{selectedClass.location}</span>
+                  <span className="hidden sm:inline">•</span>
+                  <span className="truncate max-w-xs">{selectedClass.location}</span>
                 </>
               )}
             </p>
           </div>
 
           {/* Action Buttons: Auto-Schedule, Clear, Print */}
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full lg:w-auto">
             <button
               onClick={() => handleAutoSchedule(true)}
-              className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+              className="px-3 py-2.5 sm:py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors min-h-[42px] sm:min-h-0"
               title="Fills any vacant slots while keeping your current manual assignments"
             >
-              <Sparkles className="h-4 w-4 text-indigo-600" />
-              <span>Fill Empty Slots</span>
+              <Sparkles className="h-4 w-4 text-indigo-600 shrink-0" />
+              <span className="truncate">Fill Empty</span>
             </button>
 
             <button
               onClick={() => handleAutoSchedule(false)}
-              className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-colors"
+              className="px-3.5 py-2.5 sm:py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-xs transition-colors min-h-[42px] sm:min-h-0"
               title="Re-run fair workload balancing across all shifts"
             >
-              <Sparkles className="h-4 w-4 text-amber-300" />
-              <span>✨ Auto-Schedule All</span>
+              <Sparkles className="h-4 w-4 text-amber-300 shrink-0" />
+              <span className="truncate">✨ Auto-Schedule</span>
             </button>
 
             <button
               onClick={handleClear}
-              className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 transition-colors"
+              className="py-2.5 px-3 sm:p-2 rounded-xl text-slate-600 sm:text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors min-h-[42px] sm:min-h-0"
               title="Clear all assignments for this class"
             >
-              <RotateCcw className="h-4 w-4" />
+              <RotateCcw className="h-4 w-4 shrink-0" />
+              <span className="sm:hidden">Reset</span>
             </button>
 
             <button
               onClick={() => setActiveTab('print')}
-              className="px-3 py-2 rounded-xl bg-slate-800 text-slate-200 hover:text-white hover:bg-slate-700 text-xs font-medium flex items-center gap-1.5 transition-colors"
+              className="px-3 py-2.5 sm:py-2 rounded-xl bg-slate-800 text-slate-200 hover:text-white hover:bg-slate-700 text-xs font-medium flex items-center justify-center gap-1.5 transition-colors min-h-[42px] sm:min-h-0"
             >
-              <Printer className="h-4 w-4" />
+              <Printer className="h-4 w-4 shrink-0" />
               <span>Print Sheet</span>
             </button>
           </div>
@@ -365,24 +366,24 @@ export const ScheduleBoard: React.FC = () => {
                 className="bg-white rounded-2xl shadow-xs border border-slate-200 overflow-hidden flex flex-col justify-between"
               >
                 {/* Shift Header */}
-                <div className="bg-slate-900 text-white p-4 flex items-center justify-between">
-                  <div>
-                    <div className="flex items-center gap-2">
+                <div className="bg-slate-900 text-white p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                       <span className="font-bold text-sm text-slate-100">{shift.title}</span>
-                      <span className="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 text-2xs font-mono font-medium">
+                      <span className="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 text-2xs font-mono font-medium whitespace-nowrap">
                         {shift.date}
                       </span>
                       {isAllClasses && state.classes.length > 1 && (
-                        <span className="px-2 py-0.5 rounded-md bg-indigo-900/90 text-indigo-200 border border-indigo-700/60 text-3xs font-semibold">
+                        <span className="px-2 py-0.5 rounded-md bg-indigo-900/90 text-indigo-200 border border-indigo-700/60 text-3xs font-semibold truncate max-w-[140px] sm:max-w-xs">
                           {classMap.get(shift.classId)?.title || 'Class'}
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center gap-1.5 text-xs text-slate-400 mt-0.5">
-                      <Clock className="h-3.5 w-3.5 text-slate-400" />
-                      <span>{shift.startTime} – {shift.endTime}</span>
+                    <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-400 mt-1">
+                      <Clock className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                      <span className="whitespace-nowrap">{shift.startTime} – {shift.endTime}</span>
                       {shift.notes && (
-                        <span className="text-2xs text-amber-300 italic ml-1">
+                        <span className="text-2xs text-amber-300 italic truncate max-w-[200px] sm:max-w-none">
                           • {shift.notes}
                         </span>
                       )}
@@ -390,7 +391,7 @@ export const ScheduleBoard: React.FC = () => {
                   </div>
 
                   {/* Shift Progress Badge */}
-                  <div className="text-right">
+                  <div className="self-start sm:self-auto shrink-0">
                     {(() => {
                       const totalRequired = shift.taskRequirements.reduce(
                         (sum, r) => sum + r.requiredCount,
@@ -413,7 +414,7 @@ export const ScheduleBoard: React.FC = () => {
                 </div>
 
                 {/* Task Slots Container */}
-                <div className="p-4 space-y-4 flex-1">
+                <div className="p-3.5 sm:p-4 space-y-3.5 sm:space-y-4 flex-1">
                   {shift.taskRequirements.map(req => {
                     const taskAssignments = shiftAssignments.filter(a => a.taskId === req.taskId);
                     const isParking = req.taskId === 'parking';
@@ -425,7 +426,7 @@ export const ScheduleBoard: React.FC = () => {
                     return (
                       <div
                         key={req.taskId}
-                        className={`p-3.5 rounded-xl border ${
+                        className={`p-3 sm:p-3.5 rounded-xl border ${
                           isParking
                             ? 'bg-amber-50/50 border-amber-200'
                             : isSupport
@@ -434,14 +435,14 @@ export const ScheduleBoard: React.FC = () => {
                         }`}
                       >
                         {/* Task Section Header */}
-                        <div className="flex items-center justify-between mb-2.5">
+                        <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center gap-1.5">
-                            {isParking && <Car className="h-4 w-4 text-amber-700" />}
-                            {isSupport && <Users className="h-4 w-4 text-blue-700" />}
+                            {isParking && <Car className="h-4 w-4 text-amber-700 shrink-0" />}
+                            {isSupport && <Users className="h-4 w-4 text-blue-700 shrink-0" />}
                             <span className="font-bold text-xs text-slate-900">{req.taskName}</span>
                           </div>
 
-                          <span className="text-2xs font-semibold text-slate-500">
+                          <span className="text-2xs font-semibold text-slate-500 whitespace-nowrap">
                             {taskAssignments.length} of {req.requiredCount} assigned
                           </span>
                         </div>
@@ -459,29 +460,29 @@ export const ScheduleBoard: React.FC = () => {
                             return (
                               <div
                                 key={asgn.id}
-                                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-medium shadow-2xs transition-all ${
+                                className={`inline-flex items-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-xl border text-xs font-medium shadow-2xs transition-all min-h-[38px] ${
                                   conflictMsg
                                     ? 'bg-rose-50 border-rose-400 text-rose-900 ring-2 ring-rose-300'
                                     : 'bg-white border-slate-200 text-slate-900 hover:border-slate-300'
                                 }`}
                               >
-                                <div className="h-5 w-5 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center text-3xs font-bold uppercase">
+                                <div className="h-5 w-5 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center text-3xs font-bold uppercase shrink-0">
                                   {emp.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                                 </div>
                                 <span className="font-semibold">{emp.name}</span>
 
                                 {conflictMsg && (
-                                  <span title={conflictMsg} className="text-rose-600">
+                                  <span title={conflictMsg} className="text-rose-600 shrink-0">
                                     <AlertTriangle className="h-3.5 w-3.5" />
                                   </span>
                                 )}
 
                                 <button
                                   onClick={() => removeAssignment(asgn.id)}
-                                  className="ml-1 text-slate-400 hover:text-rose-600 hover:bg-slate-100 p-0.5 rounded-md"
+                                  className="ml-1 text-slate-400 hover:text-rose-600 hover:bg-slate-100 p-1 -mr-1 rounded-md transition-colors"
                                   title="Unassign employee"
                                 >
-                                  <X className="h-3 w-3" />
+                                  <X className="h-3.5 w-3.5" />
                                 </button>
                               </div>
                             );
@@ -492,7 +493,7 @@ export const ScheduleBoard: React.FC = () => {
                             <button
                               key={`unfilled-${i}`}
                               onClick={() => setAssignModalData({ shift, req })}
-                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-dashed text-xs font-semibold transition-all ${
+                              className={`inline-flex items-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-xl border border-dashed text-xs font-semibold transition-all min-h-[38px] cursor-pointer ${
                                 isParking
                                   ? 'border-amber-400 text-amber-800 bg-amber-100/50 hover:bg-amber-100'
                                   : isSupport
@@ -500,7 +501,7 @@ export const ScheduleBoard: React.FC = () => {
                                   : 'border-slate-300 text-slate-700 bg-white hover:bg-slate-100'
                               }`}
                             >
-                              <Plus className="h-3.5 w-3.5" />
+                              <Plus className="h-3.5 w-3.5 shrink-0" />
                               <span>Assign Staff Slot</span>
                             </button>
                           ))}
